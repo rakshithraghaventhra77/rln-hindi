@@ -88,15 +88,20 @@ app.post('/api/contact', (req: Request, res: Response) => {
 });
 
 // Serve static files from the Vite build directory
-app.use(express.static(path.join(__dirname, 'dist')));
+// Adjust path because we are now in the api/ folder
+app.use(express.static(path.join(__dirname, '..', 'dist')));
 
 // Catch-all route to serve the React app for any non-API routes
 app.get('*', (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
 
 
-// Start server
-app.listen(port, () => {
-  console.log(`Backend server running on http://localhost:${port}`);
-});
+// Start server only if not running as a serverless function (Vercel)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(port, () => {
+    console.log(`Backend server running on http://localhost:${port}`);
+  });
+}
+
+export default app;

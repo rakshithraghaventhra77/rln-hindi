@@ -102,7 +102,7 @@ const Counter = ({ value, duration = 2 }: { value: string, duration?: number }) 
 };
 
 // --- Navbar Component ---
-const Navbar = () => {
+const Navbar = ({ openEnroll }: { openEnroll: (course: string) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   
   return (
@@ -118,7 +118,10 @@ const Navbar = () => {
               {item}
             </a>
           ))}
-          <button className="bg-primary-fixed text-black font-bold text-sm px-6 py-2 rounded-lg inner-bevel hover:bg-white transition-all transform active:scale-95">
+          <button 
+            onClick={() => openEnroll('General Inquiry')}
+            className="bg-primary-fixed text-black font-bold text-sm px-6 py-2 rounded-lg inner-bevel hover:bg-white transition-all transform active:scale-95"
+          >
             Book Demo
           </button>
         </div>
@@ -147,7 +150,10 @@ const Navbar = () => {
                   {item}
                 </a>
               ))}
-              <button className="bg-primary-fixed text-black font-bold p-3 rounded-lg w-full">
+              <button 
+                onClick={() => { setIsOpen(false); openEnroll('General Inquiry'); }}
+                className="bg-primary-fixed text-black font-bold p-3 rounded-lg w-full"
+              >
                 Book Demo
               </button>
             </div>
@@ -1014,9 +1020,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen text-on-surface bg-surface font-sans selection:bg-primary-fixed selection:text-black">
-      <Navbar />
+      <Navbar openEnroll={openEnroll} />
       <main>
-        <Hero onBookDemo={() => setModalType('enroll')} />
+        <Hero onBookDemo={() => openEnroll('General Inquiry')} />
         <Instructor />
         <Levels />
         <Countdown />

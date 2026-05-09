@@ -67,6 +67,14 @@ const handleSubmission = async (
 };
 
 // API Endpoints
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'Backend is running!',
+    supabase: !!process.env.SUPABASE_URL
+  });
+});
+
 app.post('/api/enroll', (req: Request, res: Response) => {
   handleSubmission(req, res, 'enrollments', ['name', 'email', 'phone', 'selected_course']);
 });
@@ -87,18 +95,12 @@ app.post('/api/contact', (req: Request, res: Response) => {
   handleSubmission(req, res, 'contact_messages', ['name', 'email', 'phone', 'message']);
 });
 
-// Serve static files from the Vite build directory
-// Adjust path because we are now in the api/ folder
-app.use(express.static(path.join(__dirname, '..', 'dist')));
-
-// Catch-all route to serve the React app for any non-API routes
-app.get('*', (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
-});
-
 
 // Start server only if not running as a serverless function (Vercel)
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  // For local development, we still might want to serve static files if running standalone
+  app.use(express.static(path.join(__dirname, '..', 'dist')));
+  
   app.listen(port, () => {
     console.log(`Backend server running on http://localhost:${port}`);
   });

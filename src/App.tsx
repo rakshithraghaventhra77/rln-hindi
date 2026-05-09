@@ -12,8 +12,7 @@ import bookImg from './assets/book.jpg';
 const INSTRUCTOR_IMG = instructorImg;
 const BOOK_IMG = bookImg;
 
-// --- API Base URL ---
-const API_BASE_URL = '/api';
+import { supabase } from './lib/supabase';
 
 // --- Shared Modal Component ---
 const Modal = ({ isOpen, onClose, title, children }: { isOpen: boolean, onClose: () => void, title: string, children: React.ReactNode }) => {
@@ -757,35 +756,27 @@ const Contact = () => {
     setStatusMsg('Submitting your request...');
 
     try {
-      const endpoint = activeTab === 'demo' ? '/demo' : '/contact';
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
+      const table = activeTab === 'demo' ? 'demo_requests' : 'contact_messages';
+      const { error } = await supabase.from(table).insert([formData]);
 
-      const result = await response.json();
+      if (error) throw error;
 
-      if (result.success) {
-        setStatus('success');
-        setStatusMsg(activeTab === 'demo' ? 'Demo booked! Redirecting to WhatsApp...' : 'Message sent! Redirecting to WhatsApp...');
-        
-        // WhatsApp Redirection
-        const phone = '917010538186';
-        const type = activeTab === 'demo' ? 'Book a Demo' : 'General Inquiry';
-        const message = `Hello! I'm interested in ${type}.\n\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nMessage: ${formData.message || 'None'}`;
-        
-        const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
+      setStatus('success');
+      setStatusMsg(activeTab === 'demo' ? 'Demo booked! Redirecting to WhatsApp...' : 'Message sent! Redirecting to WhatsApp...');
+      
+      // WhatsApp Redirection
+      const phone = '917010538186';
+      const type = activeTab === 'demo' ? 'Book a Demo' : 'General Inquiry';
+      const message = `Hello! I'm interested in ${type}.\n\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nMessage: ${formData.message || 'None'}`;
+      
+      const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
 
-        setFormData({ name: '', email: '', phone: '', message: '' });
-      } else {
-        setStatus('error');
-        setStatusMsg(result.message || 'Something went wrong. Please try again.');
-      }
-    } catch (error) {
+      setFormData({ name: '', email: '', phone: '', message: '' });
+    } catch (error: any) {
+      console.error('Submission error:', error);
       setStatus('error');
-      setStatusMsg('Network error. Please check your connection.');
+      setStatusMsg(error.message || 'Something went wrong. Please try again.');
     }
   };
 
@@ -976,39 +967,37 @@ export default function App() {
     setStatus('loading');
     setStatusMsg('Submitting...');
     try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      const result = await response.json();
-      if (result.success) {
-        setStatus('success');
-        setStatusMsg('Success! Redirecting to WhatsApp...');
-        
-        // WhatsApp Redirection
-        const phone = '917010538186';
-        let message = '';
-        
-        if (modalType === 'enroll') {
-          message = `Hello! I'd like to enroll in the ${selectedCourse} course.\n\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nMessage: ${formData.message || 'None'}`;
-        } else if (modalType === 'corporate') {
-          message = `Hello! I'm interested in Corporate Training for ${formData.company_name}.\n\nContact: ${formData.contact_person}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nRequirement: ${formData.requirement}`;
-        } else if (modalType === 'book') {
-          message = `Hello! I'd like to order a copy of your book.\n\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nAddress: ${formData.address}`;
-        }
+      const table = endpoint === '/enroll' ? 'enrollments' : 
+                    endpoint === '/corporate' ? 'corporate_requests' : 
+                    endpoint === '/book' ? 'book_requests' : '';
+      
+      const { error } = await supabase.from(table).insert([formData]);
+      
+      if (error) throw error;
 
-        const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
-
-        setTimeout(closeModal, 2000);
-      } else {
-        setStatus('error');
-        setStatusMsg(result.message || 'Error occurred.');
+      setStatus('success');
+      setStatusMsg('Success! Redirecting to WhatsApp...');
+      
+      // WhatsApp Redirection
+      const phone = '917010538186';
+      let message = '';
+      
+      if (modalType === 'enroll') {
+        message = `Hello! I'd like to enroll in the ${selectedCourse} course.\n\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nMessage: ${formData.message || 'None'}`;
+      } else if (modalType === 'corporate') {
+        message = `Hello! I'm interested in Corporate Training for ${formData.company_name}.\n\nContact: ${formData.contact_person}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nRequirement: ${formData.requirement}`;
+      } else if (modalType === 'book') {
+        message = `Hello! I'd like to order a copy of your book.\n\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nAddress: ${formData.address}`;
       }
-    } catch (e) {
+
+      const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+
+      setTimeout(closeModal, 2000);
+    } catch (e: any) {
+      console.error('Submission error:', e);
       setStatus('error');
-      setStatusMsg('Network error.');
+      setStatusMsg(e.message || 'Submission failed.');
     }
   };
 
